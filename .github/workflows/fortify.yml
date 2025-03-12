@@ -49,7 +49,7 @@ jobs:
           
       # Add explicit setup of the upload-artifact action that's causing issues
       - name: Setup Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
 
       # Perform SAST and optionally SCA scan via Fortify on Demand/Fortify Hosted/Software Security Center, then
       # optionally export SAST results to the GitHub code scanning dashboard. In case further customization is
