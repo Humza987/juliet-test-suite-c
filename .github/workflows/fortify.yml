@@ -1,12 +1,11 @@
 name: Fortify AST Scan
-
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
   schedule:
-    - cron: '18 17 * * 6'  # Fixed the cron syntax (added a space)
+    - cron: '18 17 * * 6'
   workflow_dispatch:
 
 jobs:
@@ -17,40 +16,33 @@ jobs:
       contents: read
       security-events: write
     steps:
-      # Check out source code
       - name: Check Out Source Code
         uses: actions/checkout@v4
 
-      # Setup Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: 'temurin'
 
-      # Run Fortify SAST Scan
+      - name: Create Placeholder
+        run: |
+          mkdir -p artifacts
+          echo "Placeholder for upload-artifact" > artifacts/placeholder.txt
+
+      - name: Setup Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: placeholder-artifact
+          path: artifacts/placeholder.txt
+
       - name: Run Fortify SAST Scan
         uses: fortify/github-action@v1
         with:
           sast-scan: true
-          fod-release-id: ${{ secrets.FOD_RELEASE_ID }}  # Add release ID
-          fod-app-name: ${{ github.repository }}  # Use repo name as app name
-          fod-release-name: ${{ github.ref_name }}  # Use branch name as release name
-          sast-build-options: -b ${GITHUB_REF##*/}  # Build options
+          fod-release-id: "${{github.repository}}:${{github.ref_name}}"
         env:
-          FOD_URL: https://ams.fortify.com
-          FOD_TENANT: ${{ secrets.FOD_TENANT }}
-          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}  # Added client ID
-          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}  # Added client secret
-          # Removed FOD_USER and FOD_PAT in favor of client credentials
-
-      # Optional: Import Fortify scan results to GitHub Security
-      - name: Import Fortify Scan Results
-        if: success() || failure()
-        uses: fortify/github-action/import-scan-results@v1
-        with:
-          fod-base-url: https://ams.fortify.com
-          fod-tenant: ${{ secrets.FOD_TENANT }}
-          fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
-          fod-client-secret: ${{ secrets.FOD_CLIENT_SECRET }}
-          fod-release-id: ${{ secrets.FOD_RELEASE_ID }}
+          FOD_URL: "https://ams.fortify.com"
+          FOD_TENANT: ${{secrets.FOD_TENANT}}
+          FOD_USER: ${{secrets.FOD_USER}}
+          FOD_PAT: ${{secrets.FOD_PAT}}
