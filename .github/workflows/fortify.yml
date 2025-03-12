@@ -36,13 +36,23 @@ jobs:
           name: placeholder-artifact
           path: artifacts/placeholder.txt
 
+      - name: Verify Secret Presence
+        run: |
+          if [ -n "$FOD_USER" ]; then
+            echo "FOD_USER is set"
+          else
+            echo "FOD_USER is not set"
+          fi
+        env:
+          FOD_USER: ${{ secrets.FOD_USER }}
+
       - name: Run Fortify SAST Scan
         uses: fortify/github-action@v1
         with:
           sast-scan: true
         env:
           FOD_URL: "https://ams.fortify.com"
-          FOD_TENANT: ${{secrets.FOD_TENANT}}
-          FOD_USER: ${{secrets.FOD_USER}}
-          FOD_PAT: ${{secrets.FOD_PAT}}
-          FOD_RELEASE: "${{github.repository}}:${{github.ref_name}}"
+          FOD_TENANT: ${{ secrets.FOD_TENANT }}
+          FOD_USER: ${{ secrets.FOD_USER }}
+          FOD_PAT: ${{ secrets.FOD_PAT }}
+          FOD_RELEASE: "${{ github.repository }}:${{ github.ref_name }}"
