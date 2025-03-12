@@ -47,23 +47,39 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
-      # Use Fortify Setup action to install Fortify tools and prepare environment
-      - name: Setup Fortify Tools
-        uses: fortify/github-action/setup@v1
-        
+      # Use a more direct approach with the Fortify GitHub Action
+      - name: Download Fortify CLI
+        run: |
+          curl -s "https://raw.githubusercontent.com/fortify/fcli/v2.0.0/install/fcli-installer.sh" | bash -s -- --version v2.0.0
+          echo "${HOME}/.fortify/bin" >> $GITHUB_PATH
+          
+      - name: Download ScanCentral Client
+        run: |
+          curl -s "https://raw.githubusercontent.com/fortify/fcli/v2.0.0/fcli-helper-scripts/download-scancentral-client.sh" | bash -s -- --version latest
+          echo "${HOME}/.fortify/scancentral-client/bin" >> $GITHUB_PATH
+          
+      # Verify tools are installed
+      - name: Verify Fortify Tools
+        run: |
+          echo "PATH: $PATH"
+          echo "Checking for fcli:"
+          which fcli || echo "fcli not found"
+          echo "Checking for scancentral:"
+          which scancentral || echo "scancentral not found"
+          
       # Package the source code for scanning
       - name: Package Code
         run: |
-          scancentral package -bt none -o package.zip
+          ${HOME}/.fortify/scancentral-client/bin/scancentral package -bt none -o package.zip
         
       # Authenticate to FoD
       - name: Authenticate to Fortify on Demand
         run: |
-          fcli fod session login --url https://ams.fortify.com --tenant "${{secrets.FOD_TENANT}}" -u "${{secrets.FOD_USER}}" -p "${{secrets.FOD_PAT}}"
+          ${HOME}/.fortify/bin/fcli fod session login --url https://ams.fortify.com --tenant "${{secrets.FOD_TENANT}}" -u "${{secrets.FOD_USER}}" -p "${{secrets.FOD_PAT}}"
         
       # Start the scan
       - name: Start SAST Scan
         run: |
           APP_NAME="${GITHUB_REPOSITORY_OWNER}-${GITHUB_REPOSITORY#*/}"
           RELEASE_NAME="${GITHUB_REF_NAME}"
-          fcli fod sast-scan start --package package.zip --release "${APP_NAME}:${RELEASE_NAME}" --notes "GitHub Action initiated scan"
+          ${HOME}/.fortify/bin/fcli fod sast-scan start --package package.zip --release "${APP_NAME}:${RELEASE_NAME}" --notes "GitHub Action initiated scan"
