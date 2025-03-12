@@ -23,12 +23,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Semgrep on testcases only
+      - name: Run Semgrep with default rules for C and C++
         uses: returntocorp/semgrep-action@fcd5ab7459e8d91cb1777481980d1b18b4fc6735
         with:
           publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
           generateSarif: "1"
-          config: "semgrep_rules.yml"  # Updated to point to a valid Semgrep config file
+          config: "p/default"  # Use the default rules from Semgrep's public registry
+          lang: "c,cpp"  # Target only C and C++ languages
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
