@@ -1,5 +1,6 @@
 rules:
-  - id: example-rule
-    pattern: "eval($X)"
-    message: "Avoid using eval()"
+  - id: no-strcpy
+    languages: [c, cpp]
+    pattern: strcpy($DEST, $SRC)
+    message: "Avoid using strcpy; consider using strncpy or a safer alternative."
     severity: WARNING
