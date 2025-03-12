@@ -28,8 +28,7 @@ jobs:
         with:
           publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
           generateSarif: "1"
-          config: "./semgrep.yml"  # Assuming you have a local semgrep config file
-          # target is not necessary here, remove it as it's invalid
+          config: ".github/workflows/semgrep.yml"  # Path to semgrep.yml in .github/workflows/
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
