@@ -47,54 +47,27 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
-      # Explicitly download upload-artifact@v4 to avoid the v3 error
+      # Create a placeholder file for upload-artifact
+      - name: Create Placeholder
+        run: |
+          mkdir -p artifacts
+          echo "Placeholder for upload-artifact" > artifacts/placeholder.txt
+
+      # Explicitly download upload-artifact@v4 to avoid the v3 error, with required path parameter
       - name: Setup Upload Artifact
         uses: actions/upload-artifact@v4
+        with:
+          name: placeholder-artifact
+          path: artifacts/placeholder.txt
 
-      # Use the explicit setup action from fortify/github-action
-      - name: Setup Fortify Tools
-        uses: fortify/github-action/setup@v1
-
-      # Verify tools are in PATH before using them
-      - name: Verify Fortify Tools
-        run: |
-          echo "PATH: $PATH"
-          echo "Listing Fortify tools:"
-          which fcli || echo "fcli not found"
-          which scancentral || echo "scancentral not found"
-          # If tools not found, try to locate them
-          find $HOME -name fcli -type f 2>/dev/null || echo "fcli not found in $HOME"
-          find $HOME -name scancentral -type f 2>/dev/null || echo "scancentral not found in $HOME"
-          # Add possible locations to PATH
-          if [ -d "$HOME/.fortify/bin" ]; then
-            echo "$HOME/.fortify/bin" >> $GITHUB_PATH
-          fi
-          if [ -d "$HOME/.fortify/scancentral-client/bin" ]; then
-            echo "$HOME/.fortify/scancentral-client/bin" >> $GITHUB_PATH
-          fi
-
-      # Package the source code for scanning
-      - name: Package Code
-        run: |
-          # Try to find scancentral in PATH
-          scancentral package -bt none -o package.zip || \
-          # Fallback to possible location
-          { SCANCENTRAL_PATH=$(find $HOME -name scancentral -type f 2>/dev/null | head -1); [ -n "$SCANCENTRAL_PATH" ] && $SCANCENTRAL_PATH package -bt none -o package.zip; }
-          
-      # Authenticate to FoD
-      - name: Authenticate to Fortify on Demand
-        run: |
-          # Try to find fcli in PATH
-          fcli fod session login --url https://ams.fortify.com --tenant "${{secrets.FOD_TENANT}}" -u "${{secrets.FOD_USER}}" -p "${{secrets.FOD_PAT}}" || \
-          # Fallback to possible location
-          { FCLI_PATH=$(find $HOME -name fcli -type f 2>/dev/null | head -1); [ -n "$FCLI_PATH" ] && $FCLI_PATH fod session login --url https://ams.fortify.com --tenant "${{secrets.FOD_TENANT}}" -u "${{secrets.FOD_USER}}" -p "${{secrets.FOD_PAT}}"; }
-          
-      # Start the scan
-      - name: Start SAST Scan
-        run: |
-          APP_NAME="${GITHUB_REPOSITORY_OWNER}-${GITHUB_REPOSITORY#*/}"
-          RELEASE_NAME="${GITHUB_REF_NAME}"
-          # Try to find fcli in PATH
-          fcli fod sast-scan start --package package.zip --release "${APP_NAME}:${RELEASE_NAME}" --notes "GitHub Action initiated scan" || \
-          # Fallback to possible location
-          { FCLI_PATH=$(find $HOME -name fcli -type f 2>/dev/null | head -1); [ -n "$FCLI_PATH" ] && $FCLI_PATH fod sast-scan start --package package.zip --release "${APP_NAME}:${RELEASE_NAME}" --notes "GitHub Action initiated scan"; }
+      # Try a direct approach with the Fortify SAST scan
+      - name: Run Fortify SAST Scan
+        uses: fortify/github-action@v1
+        with:
+          sast-scan: true
+          export-code-scanning: false
+        env:
+          FOD_URL: https://ams.fortify.com
+          FOD_TENANT: ${{secrets.FOD_TENANT}}
+          FOD_USER: ${{secrets.FOD_USER}}
+          FOD_PASSWORD: ${{secrets.FOD_PAT}}
