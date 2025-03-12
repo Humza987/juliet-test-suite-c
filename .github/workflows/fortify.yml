@@ -46,6 +46,10 @@ jobs:
         with:
           java-version: 17
           distribution: 'temurin'
+          
+      # Add explicit setup of the upload-artifact action that's causing issues
+      - name: Setup Upload Artifact
+        uses: actions/upload-artifact@v4
 
       # Perform SAST and optionally SCA scan via Fortify on Demand/Fortify Hosted/Software Security Center, then
       # optionally export SAST results to the GitHub code scanning dashboard. In case further customization is
@@ -53,7 +57,7 @@ jobs:
       # and run them directly from within your pipeline; see https://github.com/fortify/github-action#readme for
       # details.
       - name: Run FoD SAST Scan
-        uses: fortify/github-action@a92347297e02391b857e7015792cd1926a4cd418
+        uses: fortify/github-action@v1.2.2  # Using specific version tag instead of SHA
         with:
           sast-scan: true
         env:
