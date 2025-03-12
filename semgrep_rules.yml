@@ -1,0 +1,5 @@
+rules:
+  - id: example-rule
+    pattern: "eval($X)"
+    message: "Avoid using eval()"
+    severity: WARNING
